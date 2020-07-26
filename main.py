@@ -17,13 +17,17 @@ def get_refpoint():
     return max_loc
 
 
+def click_start(x, y):
+    pyautogui.click(x / 2 + 300, y / 2 + 250)
+    pyautogui.moveTo(10, 10, 1)
+
+
 def get_tiles(x, y):
     tile = np.full((23 + 2, 15 + 2), -1)
     tile[1:-1, 1:-1] = 0
 
     np_screen_shot = np.array(ImageGrab.grab())
     tileimg = np_screen_shot[y + 136:y + 858:50, x + 110:x + 1234:50]
-    Image.fromarray(tileimg).save("tile.png")
     tileimg = tileimg.transpose(1, 0, 2)
 
     color_list = np.array([
@@ -43,7 +47,57 @@ def get_tiles(x, y):
     return tile
 
 
-pyautogui.FAILSAFE = True
+def solve(x, y, tile):
+    end_flag = False
+    while not end_flag:
+        end_flag = True
+        il = range(1, 23)
+        jl = range(1, 15)
+        if random.random() < 0.5:
+            il = il[::-1]
+        if random.random() < 0.5:
+            jl = jl[::-1]
+
+        for i in il:
+            for j in jl:
+                if tile[i, j] == 0:
+                    cros = np.zeros(4)
+                    klist = [0, 0, 0, 0]
+                    for k in range(25):
+                        if tile[i - k, j] != 0:
+                            cros[0] = tile[i - k, j]
+                            klist[0] = (i - k, j)
+                            break
+                    for k in range(25):
+                        if tile[i + k, j] != 0:
+                            cros[1] = tile[i + k, j]
+                            klist[1] = (i + k, j)
+                            break
+                    for k in range(25):
+                        if tile[i, j - k] != 0:
+                            cros[2] = tile[i, j - k]
+                            klist[2] = (i, j - k)
+                            break
+                    for k in range(25):
+                        if tile[i, j + k] != 0:
+                            cros[3] = tile[i, j + k]
+                            klist[3] = (i, j + k)
+                            break
+                    dupl = [x for x in range(1, 11) if np.sum(cros == x) >= 2]
+                    if len(dupl) >= 1:
+                        pyautogui.click(
+                            x / 2 + 55 + (i - 1) * 25,
+                            y / 2 + 67 + (j - 1) * 25, interval=0.3
+                        )
+                        for i in range(4):
+                            if cros[i] in dupl:
+                                tile[klist[i][0], klist[i][1]] = 0
+                        end_flag = False
+
 
 if __name__ == '__main__':
-    pass
+    pyautogui.FAILSAFE = True
+    x, y = get_refpoint()
+    click_start(x, y)
+    tile = get_tiles(x, y)
+    solve(x, y, tile)
