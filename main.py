@@ -1,4 +1,8 @@
 import random
+import time
+import tkinter
+from tkinter import ttk
+import functools
 import numpy as np
 import cv2
 import pyautogui
@@ -19,7 +23,9 @@ def get_refpoint():
 
 def click_start(x, y):
     pyautogui.click(x / 2 + 300, y / 2 + 250)
-    pyautogui.moveTo(10, 10, 1)
+    time.sleep(0.5)
+    pyautogui.click(x / 2 + 300, y / 2 + 250)
+    pyautogui.moveTo(x / 2, y / 2, 1)
 
 
 def get_tiles(x, y):
@@ -79,7 +85,7 @@ def solve(x, y, tile, trial_border):
             if len(dupl) >= 1:
                 pyautogui.click(
                     x / 2 + 55 + (i - 1) * 25,
-                    y / 2 + 67 + (j - 1) * 25, interval=0.3
+                    y / 2 + 67 + (j - 1) * 25
                 )
                 for i in range(4):
                     if cros[i] in dupl:
@@ -91,9 +97,47 @@ def solve(x, y, tile, trial_border):
             trial_counter += 1
 
 
-if __name__ == '__main__':
-    pyautogui.FAILSAFE = True
+def procedure(count):
     x, y = get_refpoint()
     click_start(x, y)
     tile = get_tiles(x, y)
-    solve(x, y, tile, 500)
+    solve(x, y, tile, count)
+
+
+def create_window():
+    root = tkinter.Tk()
+    root.title('colortile solver')
+
+    frame = ttk.Frame(
+        root,
+        padding=10
+    )
+
+    var = tkinter.DoubleVar(
+        value=0.7
+    )
+    scale = tkinter.Scale(
+        frame,
+        orient='horizontal',
+        variable=var,
+        length=200,
+        from_=0.0,
+        to=1.0,
+        resolution=0.01
+    )
+    button = ttk.Button(
+        frame,
+        text='start',
+        command=functools.partial(procedure, count=1000)
+    )
+
+    frame.pack()
+    scale.pack(side=tkinter.LEFT)
+    button.pack(side=tkinter.LEFT)
+
+    root.mainloop()
+
+
+if __name__ == '__main__':
+    pyautogui.FAILSAFE = True
+    create_window()
